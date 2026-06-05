@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none;}
+body{font-family:'Apple SD Gothic Neo',sans-serif;background:#fdf6ec;color:#2c2c2a;min-height:100vh;overflow:hidden;touch-action:none;}
+#app{width:100%;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;}
+
+#title-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;text-align:center;}
+#title-screen h1{font-size:36px;font-weight:700;letter-spacing:2px;color:#2c2c2a;}
+#title-screen p{font-size:15px;color:rgba(44,44,42,0.55);line-height:1.7;}
+.start-btn{padding:16px 48px;font-size:18px;font-weight:700;border:none;border-radius:50px;background:linear-gradient(135deg,#ff6b6b,#ffa94d);color:#fff;cursor:pointer;letter-spacing:1px;}
+
+#game-screen{display:none;width:100%;height:100%;flex-direction:column;align-items:center;position:relative;}
+
+#hud{width:100%;padding:20px 24px 8px;display:flex;justify-content:space-between;align-items:center;}
+.stage-label{font-size:13px;color:rgba(44,44,42,0.45);}
+.stage-val{font-size:20px;font-weight:700;color:#2c2c2a;}
+.timer-wrap{text-align:right;}
+.timer-label{font-size:13px;color:rgba(44,44,42,0.45);}
+.timer-val{font-size:20px;font-weight:700;color:#e8722a;}
+#progress-bar-wrap{width:90%;height:8px;background:rgba(44,44,42,0.1);border-radius:8px;margin:8px 0;}
+#progress-bar{height:100%;border-radius:8px;background:linear-gradient(90deg,#ff6b6b,#ffa94d);width:0%;}
+#tap-count{font-size:18px;color:rgba(44,44,42,0.8);margin:4px 0;}
+#goal-text{font-size:13px;color:rgba(44,44,42,0.4);margin-bottom:8px;}
+#img-wrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative;width:100%;}
+#game-img{border-radius:20px;object-fit:contain;}
+#img-placeholder{display:none;border-radius:20px;background:rgba(44,44,42,0.08);align-items:center;justify-content:center;font-size:60px;}
+
+/* 레벨업 문구 */
+#levelup-msg{position:absolute;top:18%;left:50%;transform:translateX(-50%) scale(0);z-index:300;font-size:40px;font-weight:900;letter-spacing:3px;color:#2fa84f;pointer-events:none;transition:transform .15s,opacity .2s;white-space:nowrap;}
+#levelup-msg.show{transform:translateX(-50%) scale(1);}
+#levelup-msg.hide{opacity:0;transform:translateX(-50%) scale(1.05);}
+
+#overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(253,246,236,0.97);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:200;text-align:center;gap:20px;}
+#overlay .ov-title{font-size:52px;font-weight:900;letter-spacing:3px;}
+#overlay .ov-sub{font-size:16px;color:rgba(44,44,42,0.55);}
+#overlay .ov-score{font-size:28px;font-weight:700;color:#e8722a;}
+#overlay .retry-btn{padding:14px 40px;font-size:16px;font-weight:700;border:none;border-radius:50px;background:linear-gradient(135deg,#ff6b6b,#ffa94d);color:#fff;cursor:pointer;margin-top:8px;}
+
+#fx-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:100;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="title-screen">
+    <h1>터치 레벨업</h1>
+    <p>10초 안에 목표 횟수를 터치하세요!<br>화면 어디든 터치해도 됩니다.</p>
+    <button class="start-btn" onclick="startGame()">시작하기</button>
+  </div>
+
+  <div id="game-screen">
+    <div id="hud">
+      <div>
+        <div class="stage-label">STAGE</div>
+        <div class="stage-val" id="stage-num">1 / 6</div>
+      </div>
+      <div class="timer-wrap">
+        <div class="timer-label">TIME</div>
+        <div class="timer-val" id="timer-num">10</div>
+      </div>
+    </div>
+    <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+    <div id="tap-count">0 / 30</div>
+    <div id="goal-text">목표까지 30번!</div>
+    <div id="img-wrap">
+      <img id="game-img" src="x1.jpg" alt="stage" width="120" height="120"
+        onerror="this.style.display='none';document.getElementById('img-placeholder').style.display='flex'">
+      <div id="img-placeholder" style="width:120px;height:120px;"></div>
+    </div>
+  </div>
+
+  <div id="levelup-msg">LEVEL UP!</div>
+
+  <div id="overlay">
+    <div class="ov-title" id="ov-title"></div>
+    <div class="ov-sub" id="ov-sub"></div>
+    <div class="ov-score" id="ov-score"></div>
+    <button class="retry-btn" onclick="restartGame()">다시하기</button>
+  </div>
+</div>
+
+<canvas id="fx-canvas"></canvas>
+
+<script>
+const GOALS=[30,45,60,75,90,110];
+const TOTAL_GOAL=410;
+const MIN_IMG=120, MAX_IMG=280;
+
+let stage=0,taps=0,timer=10,interval=null,gameActive=false,totalTaps=0;
+let imgW=MIN_IMG;
+
+const canvas=document.getElementById('fx-canvas');
+const ctx=canvas.getContext('2d');
+function resizeCanvas(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+resizeCanvas();
+window.addEventListener('resize',resizeCanvas);
+
+// 파티클 — 별
+let particles=[];
+let rafId=null;
+
+function spawnStars(x,y){
+  for(let i=0;i<6;i++){
+    const a=Math.random()*Math.PI*2;
+    const s=1.5+Math.random()*2.5;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1.5,life:1,size:12+Math.random()*8});
+  }
+  if(!rafId) rafId=requestAnimationFrame(drawParticles);
+}
+
+function drawParticles(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  let alive=false;
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x+=p.vx;p.y+=p.vy;p.vy+=0.08;p.life-=0.06;
+    if(p.life<=0){particles.splice(i,1);continue;}
+    alive=true;
+    ctx.globalAlpha=p.life;
+    ctx.font=p.size+'px serif';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText('⭐',p.x,p.y);
+  }
+  ctx.globalAlpha=1;
+  if(alive) rafId=requestAnimationFrame(drawParticles);
+  else rafId=null;
+}
+
+function setImgSize(size){
+  imgW=size;
+  const img=document.getElementById('game-img');
+  const ph=document.getElementById('img-placeholder');
+  img.width=size;img.height=size;
+  img.style.width=size+'px';img.style.height=size+'px';
+  ph.style.width=size+'px';ph.style.height=size+'px';
+}
+
+function handleTap(e){
+  if(!gameActive)return;
+  e.preventDefault();
+  const cx=e.touches?e.touches[0].clientX:e.clientX;
+  const cy=e.touches?e.touches[0].clientY:e.clientY;
+  taps++;totalTaps++;
+  spawnStars(cx,cy);
+  const goal=GOALS[stage];
+  const pct=Math.min(taps/goal,1);
+  document.getElementById('tap-count').textContent=taps+' / '+goal;
+  const left=goal-taps;
+  document.getElementById('goal-text').textContent=left>0?'목표까지 '+left+'번!':'';
+  document.getElementById('progress-bar').style.width=(pct*100)+'%';
+  setImgSize(Math.round(MIN_IMG+(MAX_IMG-MIN_IMG)*pct));
+  if(taps>=goal){gameActive=false;onSuccess();}
+}
+
+document.addEventListener('mousedown',handleTap);
+document.addEventListener('touchstart',handleTap,{passive:false});
+
+function showLevelupMsg(cb){
+  const el=document.getElementById('levelup-msg');
+  el.classList.add('show');
+  setTimeout(()=>{
+    el.classList.add('hide');
+    setTimeout(()=>{el.classList.remove('show','hide');cb();},300);
+  },700);
+}
+
+function onSuccess(){
+  clearInterval(interval);
+  // 폭죽 왕창
+  for(let i=0;i<8;i++) setTimeout(()=>{
+    spawnStars(Math.random()*canvas.width,Math.random()*canvas.height*0.6);
+  },i*60);
+
+  if(stage===5){
+    setTimeout(()=>showResult('클리어!','모든 단계 완료!',true),400);
+  } else {
+    showLevelupMsg(()=>{stage++;startStage();});
+  }
+}
+
+function onFail(){
+  showResult('FAILED','아쉽지만 실패!',false);
+}
+
+function showResult(title,sub,success){
+  document.getElementById('ov-title').textContent=title;
+  document.getElementById('ov-title').style.color=success?'#2fa84f':'#e03131';
+  document.getElementById('ov-sub').textContent=sub;
+  const pct=Math.round(totalTaps/TOTAL_GOAL*100);
+  document.getElementById('ov-score').textContent='총 터치 '+totalTaps+'회 · '+pct+'점';
+  document.getElementById('overlay').style.display='flex';
+}
+
+function startStage(){
+  taps=0;timer=10;gameActive=true;
+  const goal=GOALS[stage];
+  document.getElementById('stage-num').textContent=(stage+1)+' / 6';
+  document.getElementById('tap-count').textContent='0 / '+goal;
+  document.getElementById('goal-text').textContent='목표까지 '+goal+'번!';
+  document.getElementById('progress-bar').style.width='0%';
+  document.getElementById('timer-num').textContent='10';
+  document.querySelector('.timer-val').style.color='#e8722a';
+  const img=document.getElementById('game-img');
+  img.src=IMGS[stage];
+  img.style.display='';
+  document.getElementById('img-placeholder').style.display='none';
+  setImgSize(MIN_IMG);
+  clearInterval(interval);
+  interval=setInterval(()=>{
+    timer--;
+    document.getElementById('timer-num').textContent=timer;
+    if(timer<=3) document.querySelector('.timer-val').style.color='#e03131';
+    if(timer<=0){clearInterval(interval);gameActive=false;onFail();}
+  },1000);
+}
+
+const IMGS=['x1.jpg','x2.jpg','x3.jpg','x4.jpg','x5.jpg','x6.jpg'];
+
+function startGame(){
+  document.getElementById('title-screen').style.display='none';
+  document.getElementById('game-screen').style.display='flex';
+  stage=0;totalTaps=0;
+  startStage();
+}
+
+function restartGame(){
+  document.getElementById('overlay').style.display='none';
+  stage=0;totalTaps=0;
+  startStage();
+}
+</script>
+</body>
+</html>
