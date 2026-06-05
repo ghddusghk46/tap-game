@@ -4,14 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
+@font-face{font-family:'esamanru';src:url('esamanru Medium.ttf') format('truetype');}
 *{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none;}
-body{font-family:'Apple SD Gothic Neo',sans-serif;background:#fdf6ec;color:#2c2c2a;min-height:100vh;overflow:hidden;touch-action:none;}
+body{font-family:'esamanru',sans-serif;background:#ffd4f9;color:#2c2c2a;min-height:100vh;overflow:hidden;touch-action:none;}
 #app{width:100%;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;}
 
 #title-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;text-align:center;}
 #title-screen h1{font-size:36px;font-weight:700;letter-spacing:2px;color:#2c2c2a;}
 #title-screen p{font-size:15px;color:rgba(44,44,42,0.55);line-height:1.7;}
-.start-btn{padding:16px 48px;font-size:18px;font-weight:700;border:none;border-radius:50px;background:linear-gradient(135deg,#ff6b6b,#ffa94d);color:#fff;cursor:pointer;letter-spacing:1px;}
+.start-btn{padding:16px 48px;font-size:18px;font-weight:700;border:none;border-radius:50px;background:linear-gradient(135deg,#ffa7e9,#fa89e1);color:#fff;cursor:pointer;letter-spacing:1px;}
 
 #game-screen{display:none;width:100%;height:100%;flex-direction:column;align-items:center;position:relative;}
 
@@ -20,25 +21,25 @@ body{font-family:'Apple SD Gothic Neo',sans-serif;background:#fdf6ec;color:#2c2c
 .stage-val{font-size:20px;font-weight:700;color:#2c2c2a;}
 .timer-wrap{text-align:right;}
 .timer-label{font-size:13px;color:rgba(44,44,42,0.45);}
-.timer-val{font-size:20px;font-weight:700;color:#e8722a;}
+.timer-val{font-size:20px;font-weight:700;color:#accdff;}
 #progress-bar-wrap{width:90%;height:8px;background:rgba(44,44,42,0.1);border-radius:8px;margin:8px 0;}
-#progress-bar{height:100%;border-radius:8px;background:linear-gradient(90deg,#ff6b6b,#ffa94d);width:0%;}
+#progress-bar{height:100%;border-radius:8px;background:linear-gradient(90deg,#80757d,#ff4dd8);width:0%;}
 #tap-count{font-size:18px;color:rgba(44,44,42,0.8);margin:4px 0;}
-#goal-text{font-size:13px;color:rgba(44,44,42,0.4);margin-bottom:8px;}
+#goal-text{font-size:13px;color:rgba(255, 255, 28, 0.4);margin-bottom:8px;}
 #img-wrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative;width:100%;}
 #game-img{border-radius:20px;object-fit:contain;}
 #img-placeholder{display:none;border-radius:20px;background:rgba(44,44,42,0.08);align-items:center;justify-content:center;font-size:60px;}
 
 /* 레벨업 문구 */
-#levelup-msg{position:absolute;top:18%;left:50%;transform:translateX(-50%) scale(0);z-index:300;font-size:40px;font-weight:900;letter-spacing:3px;color:#2fa84f;pointer-events:none;transition:transform .15s,opacity .2s;white-space:nowrap;}
+#levelup-msg{position:absolute;top:18%;left:50%;transform:translateX(-50%) scale(0);z-index:300;font-size:40px;font-weight:900;letter-spacing:3px;color:#ddffe6;pointer-events:none;transition:transform .15s,opacity .2s;white-space:nowrap;}
 #levelup-msg.show{transform:translateX(-50%) scale(1);}
 #levelup-msg.hide{opacity:0;transform:translateX(-50%) scale(1.05);}
 
-#overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(253,246,236,0.97);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:200;text-align:center;gap:20px;}
+#overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255, 216, 252, 0.97);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:200;text-align:center;gap:20px;}
 #overlay .ov-title{font-size:52px;font-weight:900;letter-spacing:3px;}
 #overlay .ov-sub{font-size:16px;color:rgba(44,44,42,0.55);}
-#overlay .ov-score{font-size:28px;font-weight:700;color:#e8722a;}
-#overlay .retry-btn{padding:14px 40px;font-size:16px;font-weight:700;border:none;border-radius:50px;background:linear-gradient(135deg,#ff6b6b,#ffa94d);color:#fff;cursor:pointer;margin-top:8px;}
+#overlay .ov-score{font-size:28px;font-weight:700;color:#47685a;}
+#overlay .retry-btn{padding:14px 40px;font-size:16px;font-weight:700;border:none;border-radius:50px;background:linear-gradient(135deg,#47685a,#2d2b3a);color:#fff;cursor:pointer;margin-top:8px;}
 
 #fx-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:100;}
 </style>
@@ -46,9 +47,9 @@ body{font-family:'Apple SD Gothic Neo',sans-serif;background:#fdf6ec;color:#2c2c
 <body>
 <div id="app">
   <div id="title-screen">
-    <h1>터치 레벨업</h1>
-    <p>10초 안에 목표 횟수를 터치하세요!<br>화면 어디든 터치해도 됩니다.</p>
-    <button class="start-btn" onclick="startGame()">시작하기</button>
+    <h1>거지키우기</h1>
+    <p>안녕하세염<br>아무데나 누르시오..</p>
+    <button class="start-btn" onclick="startGame()">고수되러가기</button>
   </div>
 
   <div id="game-screen">
@@ -183,7 +184,7 @@ function onSuccess(){
 }
 
 function onFail(){
-  showResult('FAILED','아쉽지만 실패!',false);
+  showResult('FALED!!!!!!님은 하수입니다..',false);
 }
 
 function showResult(title,sub,success){
